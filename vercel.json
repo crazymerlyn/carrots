@@ -1,0 +1,16 @@
+{
+    "buildCommand": "cd carrots_game && python manage.py collectstatic --noinput",
+    "outputDirectory": "carrots_game/staticfiles",
+    "framework": "django",
+    "functions": {
+        "carrots_game/carrots_game/wsgi.py": {
+            "maxDuration": 30
+        }
+    },
+    "routes": [
+        {
+            "src": "/static/(.*)",
+            "dest": "/carrots_game/staticfiles/static/$1"
+        }
+    ]
+}

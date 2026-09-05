@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrots - Card Game</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Lobby Screen -->
+        <div id="lobby-screen" class="screen active">
+            <h1>Carrots</h1>
+            <p class="subtitle">A card game for 2+ players</p>
+            
+            <div class="lobby-form">
+                <input type="text" id="player-name" placeholder="Your name" maxlength="20">
+                
+                <div class="button-group">
+                    <button onclick="createRoom()" class="btn primary">Create Room</button>
+                    <div class="divider">or</div>
+                    <input type="text" id="room-code-input" placeholder="Room code" maxlength="6" style="text-transform: uppercase;">
+                    <button onclick="joinRoom()" class="btn secondary">Join Room</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Waiting Room Screen -->
+        <div id="waiting-screen" class="screen">
+            <h2>Waiting Room</h2>
+            <div class="room-code-display">
+                Room Code: <span id="room-code-display"></span>
+            </div>
+            <p>Share this code with friends to join</p>
+            
+            <div id="players-list" class="players-list"></div>
+            
+            <button id="start-btn" onclick="startGame()" class="btn primary" style="display: none;">Start Game</button>
+            <p id="waiting-msg" class="waiting-msg">Waiting for host to start...</p>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <div class="game-info">
+                    <span>Room: <span id="game-room-code"></span></span>
+                    <span>Deck: <span id="deck-count"></span></span>
+                </div>
+                <div id="turn-indicator" class="turn-indicator"></div>
+            </div>
+
+            <div class="game-board">
+                <div id="opponents-area" class="opponents-area"></div>
+                
+                <div class="center-area">
+                    <div class="deck-area">
+                        <div class="card deck-card" id="deck-pile" onclick="drawFromDeck()">
+                            <span>Draw</span>
+                        </div>
+                        <div class="card discard-card" id="discard-pile" onclick="drawFromDiscard()">
+                            <span id="discard-card-display">Empty</span>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button id="discard-btn" onclick="discardCard()" class="btn small" disabled>Discard</button>
+                        <button id="cooked-btn" onclick="claimCooked()" class="btn small warning" disabled>Cooked!</button>
+                    </div>
+                </div>
+
+                <div class="my-area">
+                    <h3>Your Carrots</h3>
+                    <div id="my-carrots" class="carrots-grid"></div>
+                    <div id="my-hand" class="hand-area"></div>
+                </div>
+            </div>
+
+            <!-- Power Modal -->
+            <div id="power-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <h3 id="power-modal-title"></h3>
+                    <div id="power-modal-body"></div>
+                    <div class="modal-actions">
+                        <button onclick="cancelPower()" class="btn secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Match Modal -->
+            <div id="match-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <h3>Try to Match</h3>
+                    <p>Select a carrot to try to match with the discard pile</p>
+                    <div id="match-targets"></div>
+                    <div class="modal-actions">
+                        <button onclick="cancelMatch()" class="btn secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameover-screen" class="screen">
+            <h2>Game Over!</h2>
+            <div id="final-scores" class="scores-list"></div>
+            <button onclick="backToLobby()" class="btn primary">Play Again</button>
+        </div>
+    </div>
+
+    <script src="/static/js/game.js"></script>
+</body>
+</html>

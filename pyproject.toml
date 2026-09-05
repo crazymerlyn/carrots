@@ -1,0 +1,14 @@
+[project]
+name = "carrots-game"
+version = "1.0.0"
+description = "A multiplayer card game"
+requires-python = ">=3.10"
+dependencies = [
+    "django>=4.2,<7.0",
+]
+
+[tool.vercel]
+entrypoint = "carrots_game/carrots_game/wsgi.py:application"
+
+[tool.vercel.scripts]
+build = "cd carrots_game && python manage.py collectstatic --noinput"
