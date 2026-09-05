@@ -8,4 +8,4 @@ dependencies = [
 ]
 
 [tool.vercel.scripts]
-build = "cd carrots_game && python manage.py collectstatic --noinput"
+build = "python manage.py collectstatic --noinput"
