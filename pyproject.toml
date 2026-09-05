@@ -7,8 +7,5 @@ dependencies = [
     "django>=4.2,<7.0",
 ]
 
-[tool.vercel]
-entrypoint = "carrots_game/carrots_game/wsgi.py:application"
-
 [tool.vercel.scripts]
 build = "cd carrots_game && python manage.py collectstatic --noinput"
