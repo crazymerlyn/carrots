@@ -1,5 +1,5 @@
 {
     "framework": "django",
     "buildCommand": "python manage.py collectstatic --noinput",
-    "outputDirectory": "carrots_game/staticfiles"
+    "outputDirectory": "staticfiles"
 }
