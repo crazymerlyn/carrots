@@ -1,5 +1,11 @@
 {
     "framework": "django",
     "buildCommand": "python manage.py collectstatic --noinput",
-    "outputDirectory": "staticfiles"
+    "outputDirectory": "staticfiles",
+    "routes": [
+        {
+            "src": "/static/(.*)",
+            "dest": "/staticfiles/static/$1"
+        }
+    ]
 }
