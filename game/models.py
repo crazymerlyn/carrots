@@ -78,7 +78,10 @@ class Room(models.Model):
                 reshuffled = True
             else:
                 return None, False
-        return self.deck.pop(), reshuffled
+        deck = self.deck[:]
+        card = deck.pop()
+        self.deck = deck
+        return card, reshuffled
     
     def __str__(self):
         return f"Room {self.code} ({self.state})"

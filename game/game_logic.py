@@ -2,14 +2,14 @@ from .models import Room, Player, create_deck, card_key
 
 
 def start_game(room):
-    room.deck = create_deck()
+    deck = create_deck()
     room.discard_pile = []
     room.current_turn_index = 0
     room.state = 'playing'
     
     for player in room.players.all().order_by('position'):
         for i in range(4):
-            card = room.deck.pop()
+            card = deck.pop()
             player.set_carrot(i, card)
         
         player.set_visible(2, True)
@@ -18,6 +18,7 @@ def start_game(room):
         player.has_claimed_cooked = False
         player.save()
     
+    room.deck = deck
     room.save()
     return room
 
@@ -59,7 +60,9 @@ def draw_from_discard(player):
     if not room.discard_pile:
         return None, "Discard pile is empty"
     
-    card = room.discard_pile.pop()
+    discard_pile = room.discard_pile[:]
+    card = discard_pile.pop()
+    room.discard_pile = discard_pile
     player.hand = [card]
     player.save()
     room.save()
@@ -82,7 +85,9 @@ def discard_from_hand(player, hand_card_index=0):
         hand_card_index = 0
     
     card = player.hand.pop(hand_card_index)
-    room.discard_pile.append(card)
+    discard_pile = room.discard_pile[:]
+    discard_pile.append(card)
+    room.discard_pile = discard_pile
     player.save()
     room.save()
     
@@ -109,7 +114,9 @@ def replace_carrot(player, hand_card_index, carrot_index):
     new_card = player.hand.pop(hand_card_index)
     old_card = player.get_carrot(carrot_index)
     player.set_carrot(carrot_index, new_card)
-    room.discard_pile.append(old_card)
+    discard_pile = room.discard_pile[:]
+    discard_pile.append(old_card)
+    room.discard_pile = discard_pile
     player.save()
     room.save()
     
@@ -236,7 +243,9 @@ def try_match_carrot(player, target_player_id, carrot_index):
     if card_key(carrot) == card_key(top_discard):
         target_player.set_carrot(carrot_index, None)
         target_player.save()
-        room.discard_pile.append(carrot)
+        discard_pile = room.discard_pile[:]
+        discard_pile.append(carrot)
+        room.discard_pile = discard_pile
         room.save()
         return True, None
     else:
