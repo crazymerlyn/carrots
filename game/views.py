@@ -235,17 +235,13 @@ def replace_carrot_view(request):
     except Player.DoesNotExist:
         return json_error("Player not found")
     
-    result = game_logic.replace_carrot(player, hand_card_index, carrot_index)
-    if len(result) == 2:
-        return json_error(result[1])
-    
-    new_card, old_card, error = result
+    result, error = game_logic.replace_carrot(player, hand_card_index, carrot_index)
     if error:
         return json_error(error)
-    
+
     game_logic.get_next_turn(player.room)
-    
-    return JsonResponse({'new_card': new_card, 'old_card': old_card})
+
+    return JsonResponse(result)
 
 
 @csrf_exempt

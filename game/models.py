@@ -1,4 +1,3 @@
-import uuid
 import random
 import string
 from django.db import models
@@ -65,24 +64,7 @@ class Room(models.Model):
         if self.discard_pile:
             return self.discard_pile[-1]
         return None
-    
-    def draw_from_deck(self):
-        reshuffled = False
-        if not self.deck:
-            if len(self.discard_pile) > 1:
-                top = self.discard_pile.pop()
-                self.deck = self.discard_pile[:]
-                self.deck.reverse()
-                self.discard_pile = [top]
-                random.shuffle(self.deck)
-                reshuffled = True
-            else:
-                return None, False
-        deck = self.deck[:]
-        card = deck.pop()
-        self.deck = deck
-        return card, reshuffled
-    
+
     def __str__(self):
         return f"Room {self.code} ({self.state})"
 
