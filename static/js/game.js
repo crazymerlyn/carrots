@@ -120,6 +120,10 @@ function updateUI() {
     if (gameState.state === 'waiting') {
         updateWaitingRoom();
     } else if (gameState.state === 'playing') {
+        if (document.getElementById('waiting-screen').classList.contains('active')) {
+            showScreen('game-screen');
+            document.getElementById('game-room-code').textContent = roomCode;
+        }
         updateGameBoard();
     }
 }
@@ -136,7 +140,7 @@ function updateWaitingRoom() {
 
 function updateGameBoard() {
     const myPlayer = gameState.players.find(p => p.id === playerId);
-    const isMyTurn = gameState.current_player_id === playerId;
+    const isMyTurn = gameState.current_player_id == playerId;
     
     document.getElementById('deck-count').textContent = gameState.deck_count;
     
@@ -249,7 +253,7 @@ function getSuitSymbol(suit) {
 }
 
 async function drawFromDeck() {
-    if (!gameState || gameState.current_player_id !== playerId) return;
+    if (!gameState || gameState.current_player_id != playerId) return;
     
     const myPlayer = gameState.players.find(p => p.id === playerId);
     if (myPlayer && myPlayer.hand && myPlayer.hand.length > 0) {
@@ -271,7 +275,7 @@ async function drawFromDeck() {
 }
 
 async function drawFromDiscard() {
-    if (!gameState || gameState.current_player_id !== playerId) return;
+    if (!gameState || gameState.current_player_id != playerId) return;
     if (!gameState.discard_pile) return;
     
     const myPlayer = gameState.players.find(p => p.id === playerId);
@@ -419,7 +423,7 @@ async function usePowerSeven(carrotIndex) {
 }
 
 async function discardCard() {
-    if (!gameState || gameState.current_player_id !== playerId) return;
+    if (!gameState || gameState.current_player_id != playerId) return;
     
     const myPlayer = gameState.players.find(p => p.id === playerId);
     if (!myPlayer || !myPlayer.hand || myPlayer.hand.length === 0) return;
@@ -630,7 +634,7 @@ function cancelMatch() {
 }
 
 async function claimCooked() {
-    if (!gameState || gameState.current_player_id !== playerId) return;
+    if (!gameState || gameState.current_player_id != playerId) return;
     
     try {
         await apiCall('/claim-cooked/', 'POST', { player_id: playerId });
