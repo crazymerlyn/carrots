@@ -127,7 +127,7 @@ def game_state(request, room_code):
             carrot = player.get_carrot(i)
             visible = player.get_visible(i)
             carrots.append({
-                'card': carrot if visible or (player_id and int(player_id) == player.id) else None,
+                'card': carrot if visible else None,
                 'visible': visible
             })
         
