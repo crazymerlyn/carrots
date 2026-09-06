@@ -67,6 +67,7 @@ class Room(models.Model):
         return None
     
     def draw_from_deck(self):
+        reshuffled = False
         if not self.deck:
             if len(self.discard_pile) > 1:
                 top = self.discard_pile.pop()
@@ -74,9 +75,10 @@ class Room(models.Model):
                 self.deck.reverse()
                 self.discard_pile = [top]
                 random.shuffle(self.deck)
+                reshuffled = True
             else:
-                return None
-        return self.deck.pop()
+                return None, False
+        return self.deck.pop(), reshuffled
     
     def __str__(self):
         return f"Room {self.code} ({self.state})"

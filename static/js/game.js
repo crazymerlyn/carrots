@@ -314,11 +314,22 @@ function showDrawnCard(card, source) {
 }
 
 async function handleDiscardDrawnCard() {
+    const card = currentPower?.card;
     document.getElementById('power-modal').style.display = 'none';
+    currentPower = null;
     
     try {
         await apiCall('/discard-card/', 'POST', { player_id: playerId });
-        pollGameState();
+        
+        if (card?.value === '7') {
+            showPowerSevenModal();
+        } else if (card?.value === '8') {
+            showPowerEightModal();
+        } else if (card?.value === '9') {
+            showPowerNineModal();
+        } else {
+            pollGameState();
+        }
     } catch (error) {
         alert(error.message);
     }
@@ -339,9 +350,6 @@ function handleReplaceWithDrawnCard() {
 async function handleMyCarrotClick(carrotIndex) {
     if (selectedHandCard === null) return;
     
-    const myPlayer = gameState.players.find(p => p.id === playerId);
-    const handCard = myPlayer?.hand?.[selectedHandCard];
-    
     try {
         await apiCall('/replace-carrot/', 'POST', { 
             player_id: playerId,
@@ -351,34 +359,63 @@ async function handleMyCarrotClick(carrotIndex) {
         
         selectedHandCard = null;
         document.getElementById('my-carrots').classList.remove('select-mode');
-        
-        if (handCard?.value === '7') {
-            showPowerSeven(carrotIndex);
-        } else {
-            pollGameState();
-        }
+        pollGameState();
     } catch (error) {
         alert(error.message);
     }
 }
 
-function showPowerSeven(carrotIndex) {
+function showPowerSevenModal() {
     const modal = document.getElementById('power-modal');
     const title = document.getElementById('power-modal-title');
     const body = document.getElementById('power-modal-body');
     
     const myPlayer = gameState.players.find(p => p.id === playerId);
-    const carrot = myPlayer.carrots[carrotIndex];
     
     title.textContent = 'Power 7 - Peek';
     body.innerHTML = `
-        <p>Your carrot ${carrotIndex + 1} is:</p>
-        <div class="card face-up ${carrot.card?.suit || ''}" style="margin: 20px auto;">
-            ${carrot.card ? `${carrot.card.value}${getSuitSymbol(carrot.card.suit)}` : 'Empty'}
+        <p>Select one of your carrots to look at:</p>
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+            ${myPlayer.carrots.map((c, i) => `
+                <div class="card face-down" 
+                     onclick="usePowerSeven(${i})"
+                     style="width: 60px; height: 84px; cursor: pointer;">
+                    ${i + 1}
+                </div>
+            `).join('')}
         </div>
     `;
     
     modal.style.display = 'flex';
+}
+
+async function usePowerSeven(carrotIndex) {
+    document.getElementById('power-modal').style.display = 'none';
+    
+    try {
+        const result = await apiCall('/use-power/', 'POST', {
+            player_id: playerId,
+            power: '7',
+            target_carrot_index: carrotIndex
+        });
+        
+        const modal = document.getElementById('power-modal');
+        const title = document.getElementById('power-modal-title');
+        const body = document.getElementById('power-modal-body');
+        
+        title.textContent = 'Power 7 - Peek';
+        body.innerHTML = `
+            <p>Your carrot ${carrotIndex + 1} is:</p>
+            <div class="card face-up ${result.carrot?.suit || ''}" style="margin: 20px auto;">
+                ${result.carrot ? `${result.carrot.value}${getSuitSymbol(result.carrot.suit)}` : 'Empty'}
+            </div>
+        `;
+        modal.style.display = 'flex';
+        
+        pollGameState();
+    } catch (error) {
+        alert(error.message);
+    }
 }
 
 async function discardCard() {
@@ -392,16 +429,17 @@ async function discardCard() {
     
     try {
         await apiCall('/discard-card/', 'POST', { player_id: playerId, hand_card_index: discardIndex });
+        selectedHandCard = null;
         
-        if (card.value === '8') {
+        if (card.value === '7') {
+            showPowerSevenModal();
+        } else if (card.value === '8') {
             showPowerEightModal();
         } else if (card.value === '9') {
             showPowerNineModal();
         } else {
             pollGameState();
         }
-        
-        selectedHandCard = null;
     } catch (error) {
         alert(error.message);
     }
@@ -495,13 +533,13 @@ function renderAllCarrotsForSwap() {
     `).join('');
 }
 
-function selectSwapCarrot(playerId, carrotIndex) {
-    swapSelections.push({ playerId, carrotIndex });
+function selectSwapCarrot(selPlayerId, carrotIndex) {
+    swapSelections.push({ playerId: selPlayerId, carrotIndex });
     
     if (swapSelections.length === 1) {
-        document.getElementById('swap1').textContent = `First carrot: Player ${playerId}, Carrot ${carrotIndex + 1}`;
+        document.getElementById('swap1').textContent = `First carrot: Player ${selPlayerId}, Carrot ${carrotIndex + 1}`;
     } else if (swapSelections.length === 2) {
-        document.getElementById('swap2').textContent = `Second carrot: Player ${playerId}, Carrot ${carrotIndex + 1}`;
+        document.getElementById('swap2').textContent = `Second carrot: Player ${selPlayerId}, Carrot ${carrotIndex + 1}`;
         executePowerNine();
     }
 }

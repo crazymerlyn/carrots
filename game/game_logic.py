@@ -33,12 +33,14 @@ def draw_from_deck(player):
     if len(player.hand) > 0:
         return None, "You already have a card in hand"
     
-    card = room.draw_from_deck()
+    card, reshuffled = room.draw_from_deck()
     if card is None:
         return None, "No cards left to draw"
     
     player.hand = [card]
     player.save()
+    if reshuffled:
+        room.save()
     
     return card, None
 
@@ -238,8 +240,8 @@ def try_match_carrot(player, target_player_id, carrot_index):
         room.save()
         return True, None
     else:
-        penalty1 = room.draw_from_deck()
-        penalty2 = room.draw_from_deck()
+        penalty1, _ = room.draw_from_deck()
+        penalty2, _ = room.draw_from_deck()
         if penalty1:
             player.hand.append(penalty1)
         if penalty2:
