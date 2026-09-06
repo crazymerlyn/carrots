@@ -166,7 +166,7 @@ function updateGameBoard() {
     updateButtons(isMyTurn);
 }
 
-function updateOppponents() {
+function updateOpponents() {
     const opponentsArea = document.getElementById('opponents-area');
     const opponents = gameState.players.filter(p => p.id !== playerId);
     
