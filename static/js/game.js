@@ -6,6 +6,67 @@ let selectedHandCard = null;
 let currentPower = null;
 
 const API_BASE = '/api';
+const STORAGE_PREFIX = 'carrots_';
+
+function saveSession() {
+    localStorage.setItem(STORAGE_PREFIX + 'playerId', playerId);
+    localStorage.setItem(STORAGE_PREFIX + 'roomCode', roomCode);
+    localStorage.setItem(STORAGE_PREFIX + 'isHost', isHost);
+}
+
+function loadSession() {
+    const savedPlayerId = localStorage.getItem(STORAGE_PREFIX + 'playerId');
+    const savedRoomCode = localStorage.getItem(STORAGE_PREFIX + 'roomCode');
+    const savedIsHost = localStorage.getItem(STORAGE_PREFIX + 'isHost');
+    
+    if (savedPlayerId && savedRoomCode) {
+        return {
+            playerId: parseInt(savedPlayerId),
+            roomCode: savedRoomCode,
+            isHost: savedIsHost === 'true'
+        };
+    }
+    return null;
+}
+
+function clearSession() {
+    localStorage.removeItem(STORAGE_PREFIX + 'playerId');
+    localStorage.removeItem(STORAGE_PREFIX + 'roomCode');
+    localStorage.removeItem(STORAGE_PREFIX + 'isHost');
+}
+
+async function tryReconnect() {
+    const session = loadSession();
+    if (!session) return false;
+    
+    try {
+        const state = await apiCall(`/game-state/${session.roomCode}/?player_id=${session.playerId}`);
+        
+        playerId = session.playerId;
+        roomCode = session.roomCode;
+        isHost = session.isHost;
+        gameState = state;
+        
+        if (state.state === 'waiting') {
+            document.getElementById('room-code-display').textContent = roomCode;
+            document.getElementById('start-btn').style.display = isHost ? 'block' : 'none';
+            document.getElementById('waiting-msg').style.display = isHost ? 'none' : 'block';
+            showScreen('waiting-screen');
+            pollGameState();
+        } else if (state.state === 'playing') {
+            document.getElementById('game-room-code').textContent = roomCode;
+            showScreen('game-screen');
+            pollGameState();
+        } else if (state.state === 'finished') {
+            showGameOver();
+        }
+        
+        return true;
+    } catch (error) {
+        clearSession();
+        return false;
+    }
+}
 
 async function apiCall(endpoint, method = 'GET', data = null) {
     const options = {
@@ -45,6 +106,8 @@ async function createRoom() {
         roomCode = result.room_code;
         isHost = true;
         
+        saveSession();
+        
         document.getElementById('room-code-display').textContent = roomCode;
         document.getElementById('start-btn').style.display = 'block';
         document.getElementById('waiting-msg').style.display = 'none';
@@ -70,6 +133,8 @@ async function joinRoom() {
         playerId = result.player_id;
         roomCode = result.room_code;
         isHost = false;
+        
+        saveSession();
         
         document.getElementById('room-code-display').textContent = roomCode;
         document.getElementById('start-btn').style.display = 'none';
@@ -133,13 +198,13 @@ function updateWaitingRoom() {
     playersList.innerHTML = gameState.players.map(p => `
         <div class="player-item">
             <div class="position">${p.position + 1}</div>
-            <span>${p.name}${p.id === playerId ? ' (you)' : ''}</span>
+            <span>${p.name}${p.id == playerId ? ' (you)' : ''}</span>
         </div>
     `).join('');
 }
 
 function updateGameBoard() {
-    const myPlayer = gameState.players.find(p => p.id === playerId);
+    const myPlayer = gameState.players.find(p => p.id == playerId);
     const isMyTurn = gameState.current_player_id == playerId;
     
     document.getElementById('deck-count').textContent = gameState.deck_count;
@@ -149,7 +214,7 @@ function updateGameBoard() {
         turnIndicator.textContent = 'Your Turn!';
         turnIndicator.className = 'turn-indicator my-turn';
     } else {
-        const currentPlayer = gameState.players.find(p => p.id === gameState.current_player_id);
+        const currentPlayer = gameState.players.find(p => p.id == gameState.current_player_id);
         turnIndicator.textContent = `${currentPlayer?.name}'s Turn`;
         turnIndicator.className = 'turn-indicator';
     }
@@ -172,7 +237,7 @@ function updateGameBoard() {
 
 function updateOpponents() {
     const opponentsArea = document.getElementById('opponents-area');
-    const opponents = gameState.players.filter(p => p.id !== playerId);
+    const opponents = gameState.players.filter(p => p.id != playerId);
     
     opponentsArea.innerHTML = opponents.map(p => `
         <div class="opponent" data-player-id="${p.id}">
@@ -232,7 +297,7 @@ function selectHandCard(index) {
 }
 
 function updateButtons(isMyTurn) {
-    const myPlayer = gameState?.players?.find(p => p.id === playerId);
+    const myPlayer = gameState?.players?.find(p => p.id == playerId);
     const hasHandCard = myPlayer && myPlayer.hand && myPlayer.hand.length > 0;
     
     const discardBtn = document.getElementById('discard-btn');
@@ -255,7 +320,7 @@ function getSuitSymbol(suit) {
 async function drawFromDeck() {
     if (!gameState || gameState.current_player_id != playerId) return;
     
-    const myPlayer = gameState.players.find(p => p.id === playerId);
+    const myPlayer = gameState.players.find(p => p.id == playerId);
     if (myPlayer && myPlayer.hand && myPlayer.hand.length > 0) {
         alert('You already have a card in hand. Discard or replace it first.');
         return;
@@ -278,7 +343,7 @@ async function drawFromDiscard() {
     if (!gameState || gameState.current_player_id != playerId) return;
     if (!gameState.discard_pile) return;
     
-    const myPlayer = gameState.players.find(p => p.id === playerId);
+    const myPlayer = gameState.players.find(p => p.id == playerId);
     if (myPlayer && myPlayer.hand && myPlayer.hand.length > 0) {
         alert('You already have a card in hand. Discard or replace it first.');
         return;
@@ -342,7 +407,7 @@ async function handleDiscardDrawnCard() {
 function handleReplaceWithDrawnCard() {
     document.getElementById('power-modal').style.display = 'none';
     
-    const myPlayer = gameState.players.find(p => p.id === playerId);
+    const myPlayer = gameState.players.find(p => p.id == playerId);
     if (myPlayer && myPlayer.hand && myPlayer.hand.length > 0) {
         selectedHandCard = myPlayer.hand.length - 1;
     }
@@ -374,7 +439,7 @@ function showPowerSevenModal() {
     const title = document.getElementById('power-modal-title');
     const body = document.getElementById('power-modal-body');
     
-    const myPlayer = gameState.players.find(p => p.id === playerId);
+    const myPlayer = gameState.players.find(p => p.id == playerId);
     
     title.textContent = 'Power 7 - Peek';
     body.innerHTML = `
@@ -425,7 +490,7 @@ async function usePowerSeven(carrotIndex) {
 async function discardCard() {
     if (!gameState || gameState.current_player_id != playerId) return;
     
-    const myPlayer = gameState.players.find(p => p.id === playerId);
+    const myPlayer = gameState.players.find(p => p.id == playerId);
     if (!myPlayer || !myPlayer.hand || myPlayer.hand.length === 0) return;
     
     const discardIndex = selectedHandCard !== null ? selectedHandCard : 0;
@@ -454,7 +519,7 @@ function showPowerEightModal() {
     const title = document.getElementById('power-modal-title');
     const body = document.getElementById('power-modal-body');
     
-    const opponents = gameState.players.filter(p => p.id !== playerId);
+    const opponents = gameState.players.filter(p => p.id != playerId);
     
     title.textContent = 'Power 8 - Peek at Opponent';
     body.innerHTML = `
@@ -465,7 +530,7 @@ function showPowerEightModal() {
                     <strong>${p.name}</strong>
                     <div style="display: flex; gap: 5px; margin-top: 10px;">
                         ${p.carrots.map((c, i) => `
-                            <div class="card ${c.card ? 'face-down' : 'face-down'}" 
+                            <div class="card face-down" 
                                  onclick="usePowerEight(${p.id}, ${i})"
                                  style="width: 40px; height: 56px; font-size: 0.7rem;">
                                 ${i + 1}
@@ -584,9 +649,9 @@ function showPowerResult(title, carrot) {
     modal.style.display = 'flex';
 }
 
-function handleOpponentCarrotClick(playerId, carrotIndex) {
+function handleOpponentCarrotClick(clickPlayerId, carrotIndex) {
     if (gameState?.discard_pile) {
-        showMatchModal(playerId, carrotIndex);
+        showMatchModal(clickPlayerId, carrotIndex);
     }
 }
 
@@ -594,7 +659,7 @@ function showMatchModal(targetPlayerId, carrotIndex) {
     const modal = document.getElementById('match-modal');
     const targets = document.getElementById('match-targets');
     
-    const targetPlayer = gameState.players.find(p => p.id === targetPlayerId);
+    const targetPlayer = gameState.players.find(p => p.id == targetPlayerId);
     
     targets.innerHTML = `
         <p>Try to match ${targetPlayer.name}'s carrot ${carrotIndex + 1}?</p>
@@ -669,6 +734,7 @@ async function showGameOver() {
 }
 
 function backToLobby() {
+    clearSession();
     playerId = null;
     roomCode = null;
     isHost = false;
@@ -678,3 +744,7 @@ function backToLobby() {
     
     showScreen('lobby-screen');
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    tryReconnect();
+});
