@@ -212,26 +212,36 @@ def use_power_nine(player, carrot1_player_id, carrot1_index, carrot2_player_id, 
     if err:
         return False, err
 
-    try:
-        player1 = Player.objects.get(id=carrot1_player_id, room=room)
-        player2 = Player.objects.get(id=carrot2_player_id, room=room)
-    except Player.DoesNotExist:
-        return False, "Player not found"
-
     if carrot1_index < 0 or carrot1_index > 3 or carrot2_index < 0 or carrot2_index > 3:
         return False, "Invalid carrot index"
 
-    card1 = player1.get_carrot(carrot1_index)
-    card2 = player2.get_carrot(carrot2_index)
+    if carrot1_player_id == carrot2_player_id:
+        target = Player.objects.get(id=carrot1_player_id, room=room)
+        card1 = target.get_carrot(carrot1_index)
+        card2 = target.get_carrot(carrot2_index)
+        target.set_carrot(carrot1_index, card2)
+        target.set_carrot(carrot2_index, card1)
+        target.set_visible(carrot1_index, False)
+        target.set_visible(carrot2_index, False)
+        target.save()
+    else:
+        try:
+            player1 = Player.objects.get(id=carrot1_player_id, room=room)
+            player2 = Player.objects.get(id=carrot2_player_id, room=room)
+        except Player.DoesNotExist:
+            return False, "Player not found"
 
-    player1.set_carrot(carrot1_index, card2)
-    player2.set_carrot(carrot2_index, card1)
+        card1 = player1.get_carrot(carrot1_index)
+        card2 = player2.get_carrot(carrot2_index)
 
-    player1.set_visible(carrot1_index, False)
-    player2.set_visible(carrot2_index, False)
+        player1.set_carrot(carrot1_index, card2)
+        player2.set_carrot(carrot2_index, card1)
 
-    player1.save()
-    player2.save()
+        player1.set_visible(carrot1_index, False)
+        player2.set_visible(carrot2_index, False)
+
+        player1.save()
+        player2.save()
 
     return True, None
 
